@@ -697,6 +697,8 @@ Shared_Metatable("Slider",{
 
 			Value = self.Min + math.round((Value - self.Min) / Increment) * Increment
 			Value = math.clamp(Value,self.Min,self.Max)
+
+			Value = math.round(Value * 10) / 10
 		end
 
 		if Value == self.Value then
