@@ -1,1 +1,1595 @@
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
 
+if not getgenv then
+	getgenv = function()
+		return shared
+	end
+end
+
+const GerpUI = {Themes = {}}
+
+const Players = game:GetService("Players")
+const ReplicatedStorage = game:GetService("ReplicatedStorage")
+const TweenService = game:GetService("TweenService")
+const UserInputService = game:GetService("UserInputService")
+const RunService = game:GetService("RunService")
+const SoundService = game:GetService("SoundService")
+const Debris = game:GetService("Debris")
+const SoundService = game:GetService("SoundService")
+
+const Player = Players.LocalPlayer
+const PlayerGui = Player:WaitForChild("PlayerGui")
+const Mouse = Player:GetMouse()
+
+if not gethui then
+	gethui = function()
+		return PlayerGui
+	end
+end
+
+getgenv().Services = loadstring(httpget("https://raw.githubusercontent.com/tomdagoat-bot/Gerp-Library/refs/heads/main/Services"))()
+getgenv().RNG = Random.new(20110204)
+
+const MathService = getgenv().Services.M
+const ConnectionService = getgenv().Services.CS
+const DelayService = getgenv().Services.DS
+const Events = getgenv().Services.OE
+const HighlightService = getgenv().Services.HS
+
+const FileLoader = getgenv().FileLoader
+
+const UI_Template = FileLoader.Load("https://github.com/tomdagoat-bot/Gerp-Library/raw/refs/heads/main","UI.rbxm",ReplicatedStorage,"Gerp Scripts")
+const Storage = FileLoader.Load("https://github.com/tomdagoat-bot/Gerp-Library/raw/refs/heads/main","Assets.rbxm",ReplicatedStorage,"Gerp Scripts")
+
+const UI_Objects = Storage:WaitForChild("Objects",10)
+const UI_Assets = Storage:WaitForChild("Main",10)
+const Sounds = Storage:WaitForChild("Sounds",10)
+
+const Cache = {
+	["TweenInfos"] = {
+		["Load-In"] = TweenInfo.new(.75, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+		["Re-Size"] = TweenInfo.new(.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		["Slide-In"] = TweenInfo.new(.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		["Visibility"] = TweenInfo.new(.5, Enum.EasingStyle.Linear, Enum.EasingDirection.In),
+		["Shadow"] = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+		["Corner"] = TweenInfo.new(.9, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+		["Pop"] = TweenInfo.new(.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		["Theme"] = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.In),
+		["Quick-Pop (Out)"] = TweenInfo.new(.1, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out),
+		["Quick-Pop (In)"] = TweenInfo.new(.1, Enum.EasingStyle.Cubic, Enum.EasingDirection.In),
+		["Slider"] = TweenInfo.new(.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+	},
+	["Props"] = {
+		"BackgroundTransparency",
+		"BackgroundColor3",
+		"Size",
+		"TextTransparency",
+		"TextStrokeTransparency",
+		"TextColor3",
+		"TextStrokeColor3",
+		"ImageTransparency",
+		"ImageColor3",
+		"Transparency",
+	},
+	["Visibility-Props"] = {
+		"BackgroundTransparency",
+		"TextTransparency",
+		"TextStrokeTransparency",
+		"ImageTransparency",
+		"Transparency",
+	},
+	["Tweens"] = setmetatable({}, {__mode = "k"})
+}
+
+const function Get_Cache(Name : string)
+	if not Cache[Name] then
+		Cache[Name] = {}
+	end
+
+	return Cache[Name]
+end
+
+const function Has_Property(Obj : Instance,Prop : string)
+	const Success = pcall(function()
+		const _ = Obj[Prop]
+	end)
+
+	return Success
+end
+
+const function IsA(Obj : any,Type : string)
+	return typeof(Obj) == Type
+end
+
+function IsA_TextObj(Obj)
+	return Has_Property(Obj,"Text")
+end
+
+function IsA_ImageObj(Obj)
+	return Has_Property(Obj,"Image")
+end
+
+const function Rebuild(Original, Changes)
+	if not IsA(Original,"table") then
+		return Original
+	end
+
+	const Result : typeof(Original) = table.clone(Original)
+
+	if Changes then
+		for Key, Value in Changes do
+			Result[Key] = IsA(Value,"table") and Rebuild(Original[Key],Value) or Value
+		end
+	end
+
+	return Result
+end
+
+const Defaults = {
+	["Window"] = {
+		Size = UDim2.fromOffset(570,350),
+		Position = UDim2.fromScale(.5,.5),
+		AnchorPoint = Vector2.new(.5,.5),
+		Transparency = .1,
+		Transparent = true,
+		Corners = UDim.new(0,15),
+		Shadow = {
+			Enabled = true,
+			BlurRadius = UDim.new(0,30),
+			Spread = UDim2.fromOffset(5,5),
+			Transparency = .2,
+			Color = nil, -- Window.BackgroundColor
+		},
+		Title = "GERP LIBRARY",
+		Version = "V1.0.0",
+		Credit = "Made By Gerp",
+		Draggable = true,
+		Loading = {
+			Icon = "rbxassetid://132975398557010",
+			Icon_Corners = UDim.new(0,0),
+			Enabled = true,
+			Message = "Welcome To Gerp's UI Library",
+			Starting_Position = UDim2.fromScale(.5,1.5),
+			Description = "An Optimized Library With A Ton Of Features",
+			Duration = {1,3}, -- Int or Range
+		},
+		Show_Version = true,
+		Starting_Position = UDim2.fromScale(.5,1.5),
+		Icon = "rbxassetid://132975398557010",
+		Icon_Corners = UDim.new(0,0),
+		Draggable_Minimized = true,
+		Theme = "Default",
+		Font = Font.fromId(12187375716),
+		Background = {
+			Image = "rbxassetid://78694404683322",
+			Transparency = .3,
+			Visible = false,
+		},
+		Empty_Tab = {
+			Icon = "rbxassetid://132975398557010",
+			Icon_Corners = UDim.new(0,0),
+			Text = "Nobody Here But Us Chickens!",
+			Description = "This Is An Empty Tab, How Cool.",
+		},
+	},
+	["Tab"] = {
+		Name = "Default Tab",
+		Icon = {
+			Size = UDim2.fromOffset(17,17),
+			Visible = true,
+			ID = "rbxassetid://11322089611",
+			Glows = true,
+			Corners = UDim.new(0,0),
+			Align = "Left",
+			Glow_Intensity = .3,
+		},
+		Enabled = false,
+		Active = true,
+	},
+	["Button"] = {
+		Name = "Default Button",
+		Size = UDim2.fromOffset(0,50),
+		Icon = {
+			Size = UDim2.fromOffset(17,17),
+			Visible = true,
+			ID = "rbxassetid://11322089611",
+			Corners = UDim.new(0,0),
+			Align = "Left",
+		},
+		Active = true,
+		Padding = 30,
+		Align = "Center",
+		CallBack = function()
+			print("Clicked!")
+		end,
+		Sound = {
+			Enabled = false,
+			Sound = Sounds:FindFirstChild("Click"),
+		},
+		Animated = false,
+	},
+	["Toggle"] = {
+		Name = "Default Toggle",
+		Size = UDim2.fromOffset(0,50),
+		Icon = {
+			Size = UDim2.fromOffset(17,17),
+			Visible = true,
+			ID = "rbxassetid://11322089611",
+			Corners = UDim.new(0,0),
+			Align = "Left",
+		},
+		Active = true,
+		Padding = 15,
+		Radius = UDim.new(.5,0),
+		Align = "Center",
+		CallBack = function(Value)
+			print(`{Value and "Toggled" or "Un-Toggled"}`)
+		end,
+		Sound = {
+			Enabled = false,
+			Sound = Sounds:FindFirstChild("Toggle"),
+		},
+		Animated = true,
+		Button_Align = "Right",
+		Glows = true,
+
+		OnEnabled = nil,
+		OnDisabled = nil,
+	},
+	["Slider"] = {
+		Name = "Default Slider",
+		Size = UDim2.fromOffset(0,50),
+		Padding = 15,
+		Active = true,
+		Values = {
+			Min = 0,
+			Max = 100,
+			Default = 50,
+		},
+		Icons = {
+			Min = {
+				Size = UDim2.fromOffset(25,25),
+				Visible = true,
+				ID = "rbxassetid://11322089611",
+				Corners = UDim.new(0,0),
+				Align = "Left",
+			},
+			Max = {
+				Size = UDim2.fromOffset(30,30),
+				Visible = true,
+				ID = "rbxassetid://13050670424",
+				Corners = UDim.new(0,0),
+				Align = "Right",
+			},
+		},
+		Step = 1,
+		Suffix = "%",
+		CallBack = function(Value)
+			print(`Slider Set To {Value}`)
+		end,
+	},
+	["Section"] = {
+		Name = "Default Section",
+		Description = "This Is A Section, So Sigma.",
+		Show_Name = true,
+		Show_Desc = true,
+		Wraps = true,
+		Direction = "X",
+		Padding = UDim.new(0,8),
+		Align = "Left",
+	},
+	["Spacing"] = {
+		Columns = 1
+	},
+	["Theme"] = {
+		["Main Background"] = Color3.fromRGB(13,13,13),
+		["Background Transparency"] = .1,
+		Secondary = Color3.fromRGB(70,70,70),
+		["Secondary Transparency"] = .8,
+		["Main Text Color"] = Color3.fromRGB(255,255,255),
+		["Main Text Transparency"] = 0,
+		["Secondary Text Color"] = Color3.fromRGB(255,255,255),
+		["Secondary Text Transparency"] = .3,
+		["Icon Color"] = Color3.fromRGB(255,255,255),
+		["Icon Transparency"] = 0,
+		["Light Color"] = Color3.fromRGB(75,171,255),
+		Tertiary = Color3.fromRGB(90,90,90),
+		["Tertiary Transparency"] = .8,
+		Bar = Color3.fromRGB(255,255,255),
+		["Bar Transparency"] = .7,
+		["Fill Transparency"] = 0,
+		Toggled = Color3.fromRGB(0,255,0),
+		["Not Toggled"] = Color3.fromRGB(255,0,0),
+		["Warning Color"] = Color3.fromRGB(255,0,0),
+		["Fill Color"] = nil, -- Light Color
+	}
+}
+
+const function Tween(Info : {Props: string | {string} | {any}, Properties: string | {string} | {any}, Obj: GuiObject | Instance, GuiObject: GuiObject | Instance, Info: string | TweenInfo, Tweening: string | TweenInfo, Goal: nil | any, Yield : boolean, OnEnd:()->(), UnCancelable : boolean}) : Tween
+	const Obj = Info.Obj or Info.GuiObject
+	local Props = Info.Props or Info.Properties
+	const TweenInfoValue = Info.Info or Info.Tweening
+
+	if not Obj or not Props then
+		error("Tween Requires Obj / GuiObject And Props / Properties")
+	end
+
+	const Active = Get_Cache("Tweens")[Obj]
+	if Active and not Obj:HasTag("Tween") then
+		Active:Cancel()
+	end
+
+	if IsA(Props,"string") then
+
+		Props = {[Props] = Info.Goal}
+
+	elseif Info.Goal ~= nil then
+		const New_Props = {}
+
+		for _, Prop in Props do
+			New_Props[Prop] = Info.Goal
+		end
+
+		Props = New_Props
+	end
+
+	if Info.UnCancelable then
+		Obj:AddTag("Tween")
+	end
+
+	const TI = IsA(TweenInfoValue,"string") and Get_Cache("TweenInfos")[TweenInfoValue] or TweenInfoValue
+	const Result = TweenService:Create(Obj, TI, Props)
+	Get_Cache("Tweens")[Obj] = Result
+
+	Result.Completed:Once(function()
+		Obj:RemoveTag("Tween")
+		if Info.OnEnd then
+			Info.OnEnd()
+		end
+	end)
+
+	Result:Play()
+
+	if Info.Yield then
+		Result.Completed:Wait()
+	end
+
+	return Result
+end
+
+const function Get_Template(Name)
+	return Defaults[Name]
+end
+
+const Main_Properties = {butt = true,"BackgroundTransparency","TextTransparency","TextStrokeTransparency","ImageTransparency"}
+
+function Window_UIObject(Obj,Theme)
+	if not Obj:IsA("GuiObject") then return end
+
+	if Obj.Name == "Bar" then
+		Obj.BackgroundColor3 = Theme["Bar"]
+		Obj.BackgroundTransparency = Theme["Bar Transparency"]
+	elseif Obj.Name == "Fill" then
+		Obj.BackgroundColor3 = Theme["Fill Color"] or Theme["Light Color"] 
+		Obj.BackgroundTransparency = Theme["Fill Transparency"]
+	end
+
+	if Obj:GetAttribute("Main-UI") then
+		Obj.BackgroundColor3 = Theme["Main Background"]
+		Obj.BackgroundTransparency = Theme["Background Transparency"]
+	elseif Obj:GetAttribute("Secondary-UI") then
+		Obj.BackgroundColor3 = Theme["Secondary"]
+		Obj.BackgroundTransparency = Theme["Secondary Transparency"]
+	elseif Obj:GetAttribute("Tertiary-UI") then
+		Obj.BackgroundColor3 = Theme["Tertiary"]
+		Obj.BackgroundTransparency = Theme["Tertiary Transparency"]
+	end
+
+	if (Obj.Name == "Icon" or Obj:GetAttribute("Icon")) and Has_Property(Obj,"Image") then
+		Obj.ImageColor3 = Obj:GetAttribute("Color") or Theme["Icon Color"]
+		Obj.ImageTransparency = Theme["Icon Transparency"]
+	end
+
+	for _, Prop in Main_Properties do
+		if Has_Property(Obj,Prop) then
+			Obj:SetAttribute(Prop,Obj[Prop])
+		end
+	end
+
+end
+
+function Window_TextObject(Obj,Theme,Font)
+	if not IsA_TextObj(Obj) then return end
+	Obj.FontFace = Font
+	if Obj:GetAttribute("Secondary-Text") then
+		Obj.TextColor3 = Theme["Secondary Text Color"]
+		Obj.TextTransparency = Theme["Secondary Text Transparency"]
+	else
+		Obj.TextColor3 = Obj:GetAttribute("Color") or Theme["Main Text Color"]
+		Obj.TextTransparency = Theme["Main Text Transparency"]
+	end
+end
+
+const Metatables = {}
+const Inputs = {}
+
+function New_Input(Key,Call)
+	if not IsA(Call,"function") then
+		warn(`Function Submitted To {Key} Is Not A Function`)
+		return
+	end
+
+	if not Inputs[Enum.KeyCode[Key]] then
+		Inputs[Enum.KeyCode[Key]] = Call
+	else
+		warn(`Input {Key} Already Exists`)
+	end
+
+end
+
+function New_Metatable(Name,Info)
+	Metatables[Name] = Info
+	Metatables[Name].__index = Metatables[Name]
+
+	return Metatables[Name]
+end
+
+function Save_Props(Obj : GuiObject)
+	for _, Prop in (Obj.Name == "Buttons" or Obj:FindFirstAncestor("Buttons")) and Get_Cache("Visibility-Props") or Get_Cache("Props") do
+		if Has_Property(Obj,Prop) then
+			if Prop == "BackgroundTransparency" and Obj.Name == "Buttons" then continue end
+			Obj:SetAttribute(Prop,Obj[Prop])
+		end
+	end
+end
+
+const function Visibility_Props(Obj,Value)
+	const Props = {}
+
+	for _, Prop in Get_Cache("Visibility-Props") do
+		if Has_Property(Obj,Prop) and not (Prop == "Transparency" and IsA_TextObj(Obj)) then
+			Props[Prop] = Value and Obj:GetAttribute(Prop) or 1
+		end
+	end
+
+	return Props
+end
+
+const function Ancestor_Has_Tag(Obj,Tag)
+	while Obj do
+		if Obj:HasTag(Tag) then
+			return true
+		end
+
+		Obj = Obj.Parent
+	end
+
+	return false
+end
+
+function Hide(Obj : GuiObject,Only_Descendants,Include_Descendants,OnEnd,Visible)
+	if Obj:IsA("UIGradient") then return end
+	if Ancestor_Has_Tag(Obj,"Dont-Hide") then return end
+
+	if not Only_Descendants then
+		Tween({Props = Visibility_Props(Obj,false),Obj = Obj,Info = "Visibility"})
+	end
+
+	if Include_Descendants or Only_Descendants then
+		for _, Desc in Obj:GetDescendants() do
+			Hide(Desc,false,false)
+		end
+
+		if (Obj:IsA("GuiObject") and Visible) then
+			DelayService.Delay(`Hiding-{Obj.Name}`,.5,function()
+				Obj.Visible = false
+				if OnEnd then
+					OnEnd()
+				end
+			end)
+		end
+	end
+
+end
+
+function Show(Obj : GuiObject,Only_Descendants,Include_Descendants,Visible)
+	if Obj:IsA("UIGradient") then return end
+	if Ancestor_Has_Tag(Obj,"Dont-Show") or not Has_Property(Obj,"Transparency") then return end
+
+	if Obj:IsA("GuiObject") then
+		if Visible then
+			Obj.Visible = true
+		end
+
+		if not Obj:FindFirstAncestorOfClass("ScreenGui").Enabled and
+			Obj:FindFirstAncestor("Content") and not Obj.Visible then return end
+	end
+
+	if not Only_Descendants then
+		Tween({Props = Visibility_Props(Obj,true),Obj = Obj,Info = "Visibility"})
+	end
+
+	if Include_Descendants or Only_Descendants then
+		for _, Desc in Obj:GetDescendants() do
+			Show(Desc,false,false)
+		end
+	end
+end
+
+const Alignments = {
+	[1] = "Left",
+	[2] = "Center",
+	[3] = "Right",
+}
+
+const function Get_Alignment(Direction)
+	return table.find(Alignments,Direction) - 1 or 0
+end
+
+New_Metatable("Object",{
+
+	Lock = function(self)
+		self.Active = false
+	end,
+
+	Unlock = function(self)
+		self.Active = true
+	end,
+
+	Get = function(self)
+		return self.Value
+	end,
+
+	BindInput = function(self,Input)
+		New_Input(Input,function()
+			const CallBack = self.Toggle or self.Click
+			CallBack(self)
+		end)
+	end,
+
+})
+
+function Shared_Metatable(Name,Metatable,Other_Metatable)
+	const New_Metatable = New_Metatable(Name,Metatable)
+
+	for Method_Name, Method in Metatables[Other_Metatable or "Object"] do
+		if Method_Name == "__index" or Metatables[Name][Method_Name] then continue end
+		Metatables[Name][Method_Name] = Method
+	end
+
+	return New_Metatable
+end
+
+Shared_Metatable("Button",{
+	Click = function(self)
+		if not self.Active then return end
+
+		const S = self.Info.Sound
+
+		task.spawn(self.Info.CallBack)
+
+		if self.Info.Animated then
+			if self.Animating then return end
+			self.Animating = true
+
+			const SA = self.UI.Size
+			const SI = SA.Y
+
+			const P = self.UI.Padding
+
+			const PL = P.PaddingLeft
+			const PR = P.PaddingRight
+
+			Tween({Obj = P,Info = "Quick-Pop (Out)",Props = {PaddingLeft = UDim.new(0,PL.Offset * 1.15),PaddingRight = UDim.new(0,PR.Offset * 1.15)}})	
+
+			Tween({Obj = self.UI,Info = "Quick-Pop (Out)",Props = {Size = UDim2.new(0,0,SI.Scale * 1.15,SI.Offset * 1.15)},OnEnd = function()
+				Tween({Obj = self.UI,Info = "Quick-Pop (In)",Props = {Size = SA}})
+				Tween({Obj = P,Info = "Quick-Pop (In)",Props = {PaddingLeft = PL,PaddingRight = PR},OnEnd = function()
+					self.Animating = false
+				end})	
+			end,})
+		end
+
+		if S.Enabled then
+			SoundService:PlayLocalSound(S.Sound)
+		end
+	end,
+})
+
+Shared_Metatable("Toggle",{
+	Toggle = function(self,Visual : boolean,DontTween : boolean)
+		Visual = Visual ~= nil and Visual or true
+		Visual = not Visual
+		if not self.Active and Visual then return end
+
+		self[self.Value and "Disable" or "Enable"](self,Visual,DontTween)
+	end,
+
+	Enable = function(self,Visual : boolean,DontTween)
+		const T = self.Parent.Window.CurrentTheme
+		const C = T["Toggled"]
+
+		const S = self.Info.Sound
+
+		if (DontTween and DontTween ~= nil) or not self.Info.Animated then
+			self.Button.Click.Position = self.Button.Click:GetAttribute("On")
+			self.Button.BackgroundColor3 = C
+			self.Button.Glow.Color = C
+		else
+			Tween({GuiObject = self.Button.Click,Tweening = "Pop",Properties = "Position",Goal = self.Button.Click:GetAttribute("On")})
+			Tween({GuiObject = self.Button,Tweening = "Re-Size",Properties = "BackgroundColor3",Goal = C})
+			Tween({GuiObject = self.Button.Glow,Tweening = "Re-Size",Properties = "Color",Goal = C})	
+		end
+
+		if not Visual then
+			self.Value = true
+			self.Button:AddTag("Enabled")
+
+			if S.Enabled then
+				SoundService:PlayLocalSound(S.OnEnabled or S.Sound)
+			end
+
+			if self.Info.CallBack then
+				self.Info.CallBack(true)
+			end
+
+			if self.Info.OnEnabled then
+				self.Info.OnEnabled()
+			end
+		end
+	end,
+
+	Disable = function(self,Visual : boolean,DontTween)
+		const T = self.Parent.Window.CurrentTheme
+		const C = T["Not Toggled"]
+
+		const S = self.Info.Sound
+
+		if (DontTween and DontTween ~= nil) or not self.Info.Animated then
+			self.Button.Click.Position = self.Button.Click:GetAttribute("Off")
+			self.Button.BackgroundColor3 = C
+			self.Button.Glow.Color = C
+		else
+			Tween({GuiObject = self.Button.Click,Tweening = "Pop",Properties = "Position",Goal = self.Button.Click:GetAttribute("Off")})
+			Tween({GuiObject = self.Button,Tweening = "Re-Size",Properties = "BackgroundColor3",Goal = C})
+			Tween({GuiObject = self.Button.Glow,Tweening = "Re-Size",Properties = "Color",Goal = C})	
+		end
+
+		if not Visual then
+			self.Value = false
+			self.Button:RemoveTag("Enabled")
+
+			if S.Enabled then
+				SoundService:PlayLocalSound(S.OnDisabled or S.Sound)
+			end
+
+			if self.Info.CallBack then
+				self.Info.CallBack(false)
+			end
+
+			if self.Info.OnDisabled then
+				self.Info.OnDisabled()
+			end
+		end
+	end,
+})
+
+Shared_Metatable("Slider",{
+	Update = function(self,Input)
+		if not self.Active then return end
+
+		const Bar = self.Bar
+		const Alpha = math.clamp((Input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X,0,1)
+
+		self:Set(self.Min + (self.Max - self.Min) * Alpha)
+	end,
+
+	Set = function(self,Value,DontTween)
+		if not self.Active then return end
+
+		Value = math.clamp(Value,self.Min,self.Max)
+
+		const Step = self.Info.Step or 0
+
+		if Step > 0 then
+			const Chunks = self.Max / Step
+			const Increment = (self.Max - self.Min) / Chunks
+
+			Value = self.Min + math.round((Value - self.Min) / Increment) * Increment
+			Value = math.clamp(Value,self.Min,self.Max)
+		end
+
+		if Value == self.Value then
+			return
+		end
+
+		self.Value = Value
+
+		const Alpha = (self.Max == self.Min) and 0 or (Value - self.Min) / (self.Max - self.Min)
+
+		const Fill_Goal = UDim2.new(Alpha,0,1,0)
+
+		const Thumb_Pos = self.Thumb.Position
+		const Thumb_Goal = UDim2.new(Alpha,0,Thumb_Pos.Y.Scale,Thumb_Pos.Y.Offset)
+
+		if DontTween then
+			self.Fill.Size = Fill_Goal
+			self.Thumb.Position = Thumb_Goal
+		else
+			Tween({Obj = self.Fill,Info = "Slider",Props = "Size",Goal = Fill_Goal})
+			Tween({Obj = self.Thumb,Info = "Slider",Props = "Position",Goal = Thumb_Goal})
+		end
+
+		self.Value_UI.Text = `{Value}{self.Info.Suffix or ""}`
+
+		self.Info.CallBack(Value)
+	end,
+})
+
+const Directions = {"Right","Left"}
+
+New_Metatable("Section",{
+	Spacing = function(self,Mod)
+		const Info = Rebuild(Get_Template("Spacing"),Mod)
+
+		const UI = UI_Objects:Clone()
+		UI.Parent = self.Content_UI
+
+		UI.Size = UDim2.new(1,0,0,10 * Info.Columns)
+	end,
+
+	Button = function(Section,Mod)
+		const Info = Rebuild(Get_Template("Button"),Mod)
+		const I = Info.Icon
+		const S = Info.Size.Y
+
+		const P = Info.Padding
+
+		const Button = UI_Objects.Button:Clone()
+		Button.Parent = Section.Content_UI
+
+		Button.Texte.Text = Info.Name
+
+		Button.Icon.Image = I.ID
+		Button.Icon.Size = I.Size
+		Button.Icon.Visible = I.Visible
+
+		Button.Icon.Corner.CornerRadius = I.Corners
+		Button.Icon.LayoutOrder = Get_Alignment(I.Align)
+
+		Button.Size = UDim2.new(0,0,S.Scale,S.Offset)
+
+		for _, Direction in Directions do
+			const B = Info.Align == "Center" and P or Direction == Info.Align and P / 2 or P * (3 / 2)
+			Button.Padding[`Padding{Direction}`] = UDim.new(0,B)
+		end
+
+		const self = setmetatable({},Metatables["Button"])
+
+		self.UI = Button
+		self.Info = Info
+
+		self.Active = Info.Active
+
+		Button.MouseButton1Click:Connect(function()
+			self:Click()
+		end)
+
+		return self
+	end,
+
+	Toggle = function(Section,Mod)
+		const Info = Rebuild(Get_Template("Toggle"),Mod)
+		const I = Info.Icon
+		const S = Info.Size.Y
+
+		const P = Info.Padding
+
+		const Toggle = UI_Objects.Toggle:Clone()
+		Toggle.Parent = Section.Content_UI
+
+		Toggle.Texte.Text = Info.Name
+		Toggle.Texte.LayoutOrder = Get_Alignment(Info.Align)
+
+		Toggle.Icon.Image = I.ID
+		Toggle.Icon.Size = I.Size
+		Toggle.Icon.Visible = I.Visible
+
+		Toggle.Icon.Corner.CornerRadius = I.Corners
+		Toggle.Icon.LayoutOrder = Get_Alignment(I.Align)
+
+		Toggle.Size = UDim2.new(0,0,S.Scale,S.Offset)
+
+		for _, Direction in Directions do
+			const B = Info.Align == "Center" and P or Direction == Info.Align and P / 2 or P * (3 / 2)
+			Toggle.Padding[`Padding{Direction}`] = UDim.new(0,B)
+		end
+
+		const self = setmetatable({},Metatables["Toggle"])
+
+		self.UI = Toggle
+		self.Info = Info
+
+		self.Active = Info.Active
+		self.Value = Info.Enabled
+
+		self.Button = Toggle.Button
+		self.Button.LayoutOrder = Get_Alignment(Info.Button_Align)
+		self.Button.Corner.CornerRadius = Info.Radius
+		self.Button.Glow.Enabled = Info.Glows
+
+		self.Parent = Section
+
+		self[self.Value and "Enable" or "Disable"](self,true,true)
+
+		self.Button.MouseButton1Click:Connect(function()
+			self:Toggle()
+		end)
+
+		return self
+	end,
+
+	Slider = function(Section,Mod)
+		const Info = Rebuild(Get_Template("Slider"),Mod)
+		const S = Info.Size.Y
+		const P = Info.Padding
+		const V = Info.Values
+		const Ic = Info.Icons
+
+		const Slider = UI_Objects.Slider:Clone()
+		Slider.Parent = Section.Content_UI
+
+		Slider.Size = UDim2.new(0,0,S.Scale,S.Offset)
+
+		if Has_Property(Slider,"Padding") then
+			Slider.Padding.PaddingLeft = UDim.new(0,P)
+			Slider.Padding.PaddingRight = UDim.new(0,P)
+		end
+
+		const self = setmetatable({},Metatables["Slider"])
+
+		self.UI = Slider
+		self.Info = Info
+
+		self.Active = Info.Active
+
+		self.Bar = Slider.Bar
+		self.Fill = self.Bar.Fill
+		self.Thumb = self.Bar.Slider
+		self.Value_UI = self.Bar.Value
+
+		self.Min = V.Min
+		self.Max = V.Max
+
+		self.Min_Icon = Slider.Min
+		self.Max_Icon = Slider.Max
+
+		for Key, Icon_UI in {Min = self.Min_Icon,Max = self.Max_Icon} do
+			const I = Ic[Key]
+			if not I then continue end
+
+			Icon_UI.Image = I.ID
+			Icon_UI.Size = I.Size
+			Icon_UI.Visible = I.Visible
+
+			Icon_UI.Corner.CornerRadius = I.Corners
+			Icon_UI.LayoutOrder = Get_Alignment(I.Align)
+		end
+
+		self.Parent = Section
+
+		self:Set(V.Default,true)
+
+		local Dragging = false
+
+		const function Start_Drag(Input)
+			if not self.Active then return end
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+				Dragging = true
+			end
+		end
+
+		self.Thumb.InputBegan:Connect(Start_Drag)
+
+		self.Bar.InputBegan:Connect(function(Input)
+			Start_Drag(Input)
+			if Dragging then
+				self:Update(Input)
+			end
+		end)
+
+		UserInputService.InputChanged:Connect(function(Input)
+			if Dragging and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+				self:Update(Input)
+			end
+		end)
+
+		UserInputService.InputEnded:Connect(function(Input)
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+				Dragging = false
+			end
+		end)
+
+		return self
+	end,
+})
+
+Shared_Metatable("Tab",{
+	Toggle = function(self)
+		self.Enabled = not self.Enabled
+		const Contents =  self.Content_UI.Parent
+
+		if Contents.CanvasPosition.Y > 15 then
+			Tween({Goal = Vector2.zero,Obj = Contents,Props = "CanvasPosition",Tweening = "Pop",Yield = true})
+		end
+
+		if self.Enabled then
+			self:Enable()
+			for _, Tab in self.Window.Tabs do
+				if Tab == self then
+					continue
+				end
+				Tab:Disable()
+			end
+		else
+			self:Disable()
+		end
+	end,
+
+	Enable = function(self)
+		const IC = self.UI:GetAttribute("Color") or self.Window.CurrentTheme["Light Color"]
+
+		self.Icon.Glow.Enabled = self.Info.Icon.Glows
+
+		if self.Info.Icon.Glows then
+			self.Icon.Glow.Color = IC
+			Tween({Obj = self.Icon.Glow, Info = "Visibility", Props = "Transparency", Goal = self.Info.Icon.Glow_Intensity})
+		end
+
+		Tween({Obj = self.UI.Texte, Info = "Visibility", Props = "TextColor3", Goal = IC})
+		Tween({Obj = self.Icon, Info = "Visibility", Props = "ImageColor3", Goal = IC})
+
+		self.Enabled = true
+
+		Show(self.Empty and _G.HIDDEN_UI or self.Content_UI,true,nil,true)
+	end,
+
+	Disable = function(self)
+		if self.Info.Icon.Glows then
+			Tween({Obj = self.Icon.Glow, Info = "Visibility", Properties = "Transparency", Goal = 1,OnEnd = function()
+				self.Icon.Glow.Enabled = false
+			end,})
+		end
+
+		Tween({Obj = self.UI.Texte, Info = "Visibility", Props = "TextColor3", Goal = self.Window.CurrentTheme["Main Text Color"]})
+		Tween({Obj = self.Icon, Info = "Visibility", Props = "ImageColor3", Goal = self.Window.CurrentTheme["Icon Color"]})
+
+		self.Enabled = false
+
+		if self.Empty then
+			for _, Tab in self.Window.Tabs do
+				if Tab ~= self and Tab.Enabled and Tab.Empty then
+					return
+				end
+			end
+		end
+
+		Hide(self.Empty and _G.HIDDEN_UI or self.Content_UI,true,nil,nil,true)
+	end,
+
+	Section = function(Tab,Mod)
+		const Info = Rebuild(Get_Template("Section"),Mod)
+
+		const Section = UI_Assets.Section:Clone()
+		const self = setmetatable({},Metatables["Section"])
+
+		self.Info_UI = Section.Information
+
+		self.Info_UI.Visible = Info.Show_Name or Info.Show_Desc
+
+		self.Info_UI.Description.Visible = Info.Show_Desc
+		self.Info_UI.Title.Visible = Info.Show_Name
+
+		self.Info_UI.Title.Text = Info.Name
+		self.Info_UI.Description.Text = Info.Description
+
+		self.Content_UI = Section.Contents
+
+		self.Content_UI.List.Wraps = Info.Wraps
+		self.Content_UI.List.FillDirection = Enum.FillDirection[Info.Direction == "X" and "Horizontal" or "Vertical"]
+		self.Content_UI.List.Padding = Info.Padding
+
+		const Alignment = Enum.HorizontalAlignment[Info.Align]
+		const Text_Alignment = Enum.TextXAlignment[Info.Align]
+
+		self.Content_UI.List.HorizontalAlignment = Alignment
+		self.Info_UI.List.HorizontalAlignment = Alignment
+
+		self.Info_UI.Description.TextXAlignment = Text_Alignment
+		self.Info_UI.Title.TextXAlignment = Text_Alignment
+
+		self.Content_UI.ChildAdded:Connect(function(Obj)
+			Obj.LayoutOrder = #self.Content_UI:GetChildren() - 1
+		end)
+
+		Section.Parent = Tab.Content_UI
+
+		self.Window = Tab.Window
+
+		return self
+	end,
+},"Section")
+
+New_Metatable("Window",{
+	Intro = function(self)
+		const Window = self.UI
+		const Info = self.Info
+
+		const S = Info.Size
+		const L = Info.Loading
+		const SH = Info.Shadow
+
+		for _, Obj in Window:GetChildren() do
+			if not Obj:IsA("GuiObject") then continue end
+			if Obj.Name == "Buttons" or Obj.Name == "Communicate" then continue end
+
+			Obj.Position = Obj:GetAttribute("Hidden-Position")
+		end
+
+		self.Icon.Corner.CornerRadius = Info.Icon_Corners
+
+		self.Comm.Icon.Image = L.Icon
+		self.Comm.Description.Text = L.Description
+		self.Comm.Welcome.Text = L.Message
+
+		self.Comm.Icon.Corner.CornerRadius = L.Icon_Corners
+
+		Window.ClipsDescendants = true
+
+		self.Comm.Visible = true
+		self.Comm.Position = L.Starting_Position
+
+		Window.Size = UDim2.new(S.X.Scale / 1.3,S.X.Offset / 1.3,S.Y.Scale / 1.3,S.Y.Offset / 1.3)
+		Window.Position = Info.Starting_Position
+
+		Tween({Goal = Info.Position,Info = "Load-In",Obj = Window,Props = "Position",Yield = true})
+
+		task.wait(.5)
+
+		Tween({Goal = S,Info = "Re-Size",Obj = Window,Props = "Size",Yield = true})
+
+		if SH.Enabled then
+			Window.Shadow.Enabled = SH.Enabled
+
+			const Shadow_Props = {}
+
+			for Prop, Value in SH do
+				if Prop == "Enabled" then continue end
+				Shadow_Props[Prop] = Value
+			end
+
+			Tween({Obj = Window.Shadow,Props = Shadow_Props,Info = "Shadow"})
+
+			Window.Shadow:SetAttribute("Transparency",SH.Transparency) 	
+		end
+
+		task.wait(.5)
+
+		Tween({Goal = UDim2.fromScale(.5,.5),Info = "Load-In",Obj = self.Comm,Props = "Position",Yield = true})
+
+		task.wait(.3)
+
+		const Duration = IsA(L.Duration,"number") and L.Duration or getgenv().RNG:NextInteger(L.Duration[1],L.Duration[2])
+
+		Tween({Goal = UDim2.fromScale(1,1),Info = TweenInfo.new(Duration),Obj = self.Comm.Bar.Fill,Props = "Size",Yield = true})
+
+		task.wait(.4)	
+
+		Hide(self.Comm,true,true,function()
+			self.Comm:Destroy()
+		end,true)
+
+		task.wait(1)
+
+		for _, Obj in Window:GetChildren() do
+			if not Obj:IsA("GuiObject") then continue end
+
+			Tween({Goal = Obj:GetAttribute("Real-Position"),Info = "Slide-In",Obj = Obj,Props = "Position"})
+
+			task.wait(.15)
+		end
+
+		task.wait(.35)
+
+		Window.ClipsDescendants = false
+
+		Tween({Goal = UDim.new(0,0),Info = "Corner",Obj = Window.Corner,Props = "TopRightRadius"})
+		Tween({Goal = UDim.new(0,0),Info = "Corner",Obj = Window.Background.Corner,Props = "TopRightRadius"})
+		task.wait(.15)
+		Tween({Goal = self.Closing_Buttons:GetAttribute("Size"),Info = "Corner",Obj = self.Closing_Buttons,Props = "Size",Yield = true})	
+
+		for _, Obj in self.Closing_Buttons.List:GetChildren() do
+			if not Obj:IsA("GuiObject") then continue end
+
+			Obj.Visible = true
+			TweenService:Create(Obj,Get_Cache("TweenInfos")["Pop"],{Size = Obj:GetAttribute("Size")}):Play() 
+
+			task.wait(.2)
+		end
+
+		task.wait(1)
+	end,
+
+	Tab = function(Main,Mod)
+		const Info = Rebuild(Get_Template("Tab"),Mod)
+		const I = Info.Icon
+
+		const Tab = Storage.Tab:Clone()
+		Tab.Texte.Text = Info.Name
+
+		const self = setmetatable({}, Metatables["Tab"])
+
+		self.Window = Main
+		Main.Tabs[Info.Name] = self
+
+		self.Enabled = Info.Enabled
+		self.Active = Info.Active
+
+		self.Info = Info
+
+		self.UI = Tab
+		self.Icon = Tab.Icon
+
+		self.Icon.Image = I.ID
+		self.Icon.Size = I.Size
+		self.Icon.Visible = I.Visible
+
+		self.Icon.LayoutOrder = Get_Alignment(I.Align)
+
+		self.Icon.Glow:SetAttribute("Transparency",I.Glow_Intensity)
+
+		Tab.LayoutOrder = I.Visible and 0 or 1
+
+		if I.Glows then
+			Tab:AddTag("Glows")
+		end
+
+		const Contents = UI_Assets.Contents:Clone()
+
+		Contents.Parent = Main.Content
+		Contents.Name = Info.Name
+		Contents.Visible = false
+
+		Tab.MouseButton1Click:Connect(function()
+			if not self.Active then return end
+			self:Toggle()
+
+			if self.Enabled and not self.Empty then
+				Contents.Visible = true
+			end
+		end)
+
+		self.Content_UI = Contents
+		self.Empty = true
+
+		Contents.ChildAdded:Connect(function(Obj)
+			self.Empty = false
+			Obj.LayoutOrder = #Contents:GetChildren() - 1
+
+			if not self.Enabled then
+				Hide(Obj,true,nil,function()
+					Contents.Visible = true
+				end)
+
+				_G.HIDDEN_UI.Visible = false
+				Hide(_G.HIDDEN_UI,true)
+			end
+		end)
+
+		if self.Enabled then
+			Contents.Visible = true
+			task.delay(.1,self.Enable,self)
+		end
+
+		Tab.Parent = Main.UI.Tabs
+
+		return self
+	end,
+
+	Theme = function(self,Theme)
+		Theme = Theme or self.ThemeName or "Default"
+
+		const CustomTheme = GerpUI.Themes[Theme] or Get_Template("Theme")
+
+		if not GerpUI.Themes[Theme] and Theme ~= "Default" then
+			warn(`Theme "{Theme}" Does Not Exist.`)
+			return
+		end
+
+		self.CurrentTheme = CustomTheme
+		self.ThemeName = GerpUI.Themes[Theme] and Theme or "Default"
+
+		self.UI.BackgroundColor3 = CustomTheme["Main Background"]
+
+		if not self.UI.Shadow:HasTag("Custom-Color") then
+			self.UI.Shadow.Color = CustomTheme["Main Background"]
+		end
+
+		for _, Root in {self.UI,self.UI.Parent:FindFirstChild("Close")} do
+			if not Root then continue end
+			if Root:IsA("GuiObject") then
+				Window_UIObject(Root,CustomTheme)
+				Window_TextObject(Root,CustomTheme,self.Info.Font)
+			end
+			for _, Obj in Root:GetDescendants() do
+				if not Obj:IsA("GuiObject") then continue end
+				Window_UIObject(Obj,CustomTheme)
+				Window_TextObject(Obj,CustomTheme,self.Info.Font)
+			end
+		end
+
+		Window_UIObject(UI_Objects,CustomTheme)
+		Window_TextObject(UI_Objects,CustomTheme,self.Info.Font)
+
+		self.UI.Parent:FindFirstChild("Close").Inputs.Close.Texte.TextColor3 = CustomTheme["Warning Text"] or Color3.new(1,0,0)
+		self.UI.Parent:FindFirstChild("Close").Shadow.Color = CustomTheme["Main Background"]	
+		self.UI.Parent:FindFirstChild("Close").Stroke.Color = CustomTheme["Main Background"]	
+	end,
+
+	Close = function(self)
+		getgenv().Services.CS.StopExecution()
+
+		Hide(self.UI.Parent,true)
+
+		task.wait(.5)
+
+		self.UI.Parent:Destroy()
+	end,
+
+	Close_Prompt = function(self)
+		const Prompt = self.UI.Parent.Close
+
+		Prompt.Visible = true
+
+		Tween({Obj = Prompt.Confirm,Info = "Re-Size",Props = "TextTransparency",Goal = Prompt.Confirm:GetAttribute("TextTransparency")})
+		Tween({Obj = Prompt,Props = "Size",Info = "Re-Size",Goal = Prompt:GetAttribute("Size"),Yield = true})
+
+		Prompt.Inputs.Cancel:AddTag("Active")
+		Prompt.Inputs.Close:AddTag("Active")	
+	end,
+
+	Hide = function(self)
+		if self.Hidden then return end
+		self.Hidden = true
+
+		Hide(self.UI,false,true)
+
+		for _, Obj in self.UI:QueryDescendants("GuiObject") do
+			if not Obj.Visible then
+				Obj:AddTag("Dont-Show")
+			end
+		end
+
+		task.wait(.6)
+
+		self.UI.Parent.Enabled = false
+	end,
+
+	Unhide = function(self)
+		if not self.Hidden then return end
+
+		Show(self.UI,false,true,true,true)
+
+		self.UI.Parent.Enabled = true	
+
+		for _, Obj in self.UI:QueryDescendants("GuiObject") do
+			if not Obj.Visible then
+				Obj:RemoveTag("Dont-Show")
+			end
+		end
+
+		task.wait(.6)
+
+		self.Hidden = false
+	end,
+
+	Minimize = function(self)
+		if self.Minimizing then return end
+		self.Minimizing = true
+
+		if not self.Minimized then -- minimize
+			Hide(self.UI,true)
+
+			for _, Obj in self.UI:QueryDescendants("GuiObject") do
+				if not Obj.Visible then
+					Obj:AddTag("Dont-Show")
+				end
+			end
+
+			Get_Cache("Tweens")[self.UI:FindFirstChild("Name")]:Cancel()
+			Get_Cache("Tweens")[self.UI.Buttons]:Cancel()
+
+			for _, Obj in self.UI.Buttons.List:GetChildren() do
+				if not Obj:IsA("GuiObject") then continue end
+
+				Get_Cache("Tweens")[Obj]:Cancel()
+			end
+
+			self.UI.Drag.Enabled = self.Info.Draggable_Minimized
+			self.Closing_Buttons.ClipsDescendants = false
+		end
+
+		self.Closing_Buttons.Hide.Enabled = false
+		self.Closing_Buttons.Min.Enabled = true
+
+		const Button_Position = self.Minimized and "Real-Position" or "Hidden-Position"
+		const Name_Position = self.Minimized and "Real-Position" or "Min-Position"
+		const Button_Transparency = self.Minimized and self.UI.BackgroundTransparency or 1
+
+		Tween({Info = "Slide-In",Obj = self.UI.Buttons,Props = {Position = self.UI.Buttons:GetAttribute(Button_Position),BackgroundTransparency = Button_Transparency}})
+		Tween({Info = "Slide-In",Obj = self.UI.Buttons.List,Props = {Position = self.UI.Buttons.List:GetAttribute(Button_Position)}})
+		Tween({Goal = self.Minimized and UDim.new(0,0) or self.UI.Corner.CornerRadius,Info = "Corner",Obj = self.UI.Corner,Props = "TopRightRadius"})
+
+		task.wait(.8)
+
+		const B_S = self.UI:GetAttribute("Size")
+		const Size = self.Minimized and B_S or UDim2.new(B_S.X.Scale,B_S.X.Offset,B_S.Y.Scale / 9,B_S.Y.Offset / 9)
+
+		Tween({Goal = Size,Obj = self.UI,Info = "Re-Size",Props = "Size"})
+		Tween({Goal = self.UI:FindFirstChild("Name"):GetAttribute(Name_Position),Obj = self.UI:FindFirstChild("Name"),Info = "Slide-In",Props = "Position"})
+
+		if self.Minimized then
+			task.wait(.8)
+
+			Show(self.UI,true)
+
+			for _, Obj in self.UI:QueryDescendants("GuiObject") do
+				if not Obj.Visible then
+					Obj:RemoveTag("Dont-Show")
+				end
+			end
+
+			self.Closing_Buttons.ClipsDescendants = true
+
+			task.wait(.4)
+
+			self.UI.Drag.Enabled = self.Info.Draggable
+		end
+
+		self.Minimized = not self.Minimized
+		self.Minimizing = false
+
+		self.Closing_Buttons.Hide.Enabled = true
+		self.Closing_Buttons.Min.Enabled = false
+	end,
+
+})
+
+function GerpUI:Window(Mod)
+	const Info = Rebuild(Get_Template("Window"),Mod)
+
+	const E = Info.Empty_Tab
+	const BG = Info.Background
+	const SH = Info.Shadow
+
+	const UI = UI_Template:Clone()
+	UI.Parent = gethui()
+	UI.Enabled = true
+
+	const Window = UI:WaitForChild("Hub")
+
+	const self = setmetatable({},Metatables["Window"])
+
+	self.UI = Window
+	self.Info = Info
+	self.Content = Window.Content
+	self.Closing_Buttons = Window.Buttons
+	self.Comm = Window.Communicate
+
+	self.UI_Name = Window:FindFirstChild("Name")
+	self.UI_Version = Window.Version
+	self.UI_Credit = Window.Credit
+
+	self.Icon = Window.Icon
+
+	self.Tabs = {}
+
+	UI.Close.Confirm.Text = Info.Close_Prompt or `Are You Sure You Want To Close {Info.Title}`
+
+	Window.AnchorPoint = Info.AnchorPoint
+	Window.BackgroundTransparency = Info.Transparent and Info.Transparency or 0
+	Window.Shadow.Transparency = 1	
+	Window.Corner.CornerRadius = Info.Corners
+
+	Window.Background.Corner.CornerRadius = Info.Corners
+
+	Window.Background.Image = BG.Image
+	Window.Background.ImageTransparency = BG.Transparency
+	Window.Background.Visible = BG.Visible
+
+	self.Closing_Buttons.Background.Image = BG.Image
+	self.Closing_Buttons.Background.ImageTransparency = BG.Transparency
+	self.Closing_Buttons.Background.Visible = BG.Visible
+
+	self.Closing_Buttons.BackgroundTransparency = Window.BackgroundTransparency
+
+	self.Content.Corner.CornerRadius = Info.Corners
+
+	self.UI_Name.Text = Info.Title
+	self.UI_Credit.Text = Info.Credit
+
+	self.Icon.Image = Info.Icon
+	self.Icon.Corner.CornerRadius = Info.Icon_Corners
+
+	self.UI_Version.Text = Info.Version
+	self.UI_Version.Visible = Info.Show_Version
+
+	self.CurrentTheme = Get_Template("Theme")
+	self.ThemeName = "Default"
+
+	self:Theme(Info.Theme)
+
+	Save_Props(Window)
+
+	for _, Obj in Window:GetDescendants() do
+		if not Obj:IsA("GuiObject") then continue end
+
+		Save_Props(Obj)
+	end
+
+	Window.DescendantAdded:Connect(function(Obj)
+		if not Obj:IsA("GuiObject") then return end
+
+		Obj.ZIndex += 2
+
+		Save_Props(Obj)
+		Window_UIObject(Obj,self.CurrentTheme)
+		Window_TextObject(Obj,self.CurrentTheme,Info.Font)
+	end)
+
+	for _, Obj in self.Closing_Buttons.List:GetChildren() do
+		if not Obj:IsA("GuiObject") then continue end
+
+		Obj.Size = UDim2.fromScale(0,0)
+	end
+
+	self.Minimized = false
+	self.Hidden = false
+
+	self.Minimizing = false
+
+	task.spawn(function()
+		if Info.Loading.Enabled then
+			self.In_Intro = true
+			self:Intro()
+			self.In_Intro = false
+		else
+			Window.Size = Info.Size
+			Window.Position = Info.Position
+
+			Window.Corner.TopRightRadius = UDim.new(0,0)
+			Window.Background.Corner.TopRightRadius = UDim.new(0,0)
+
+			for _, Obj in self.Closing_Buttons.List:GetChildren() do
+				if not Obj:IsA("GuiObject") then continue end
+
+				Obj.Size = Obj:GetAttribute("Size")
+				Obj.Visible = true
+			end
+
+			self.Comm:Destroy()
+
+			self.Icon.Corner.CornerRadius = Info.Icon_Corners
+
+			Window.ClipsDescendants = false
+
+			for _, Obj in Window:GetChildren() do
+				if not Obj:IsA("GuiObject") then continue end
+
+				Obj.Size = Obj:GetAttribute("Size")
+				Obj.Position = Obj:GetAttribute("Real-Position")
+			end
+		end
+
+		Window.Drag.Enabled = Info.Draggable
+
+		self.Closing_Buttons.List.Min.MouseButton1Click:Connect(function()
+			self:Minimize()
+		end)
+
+		self.Closing_Buttons.List.Hide.MouseButton1Click:Connect(function()
+			self:Hide()
+		end)
+
+		self.Closing_Buttons.List.Close.MouseButton1Click:Connect(function()
+			self:Close_Prompt()
+		end)
+
+		New_Input("LeftControl",function()
+			self:Unhide()
+		end)
+
+		UI.Close.Inputs.Cancel.MouseButton1Click:Connect(function()
+			if not UI.Close.Inputs.Cancel:HasTag("Active") then return end
+
+			Tween({Obj = UI.Close.Confirm,Info = "Re-Size",Props = "TextTransparency",Goal = 1,Yield = true})
+
+			for _, Inp in UI.Close.Inputs:GetChildren() do
+				if not Inp:IsA("GuiObject") then continue end
+
+				Tween({Obj = Inp,Info = "Re-Size",Props = "Size",Goal = UDim2.fromScale(0,0)})
+			end
+
+			task.wait(.6)
+
+			Tween({Obj = UI.Close,Info = "Re-Size",Props = "Size",Goal = UDim2.fromScale(0,0),OnEnd = function()
+				UI.Close.Visible = false
+			end})
+
+			UI.Close.Inputs.Cancel:RemoveTag("Active")
+		end)
+
+		UI.Close.Inputs.Close.MouseButton1Click:Connect(function()
+			if not UI.Close.Inputs.Close:HasTag("Active") then return end
+
+			self:Close()
+		end)
+	end)
+
+	_G.HIDDEN_UI = self.Content.Hidden
+	_G.HIDDEN_UI.Visible = false
+
+	_G.HIDDEN_UI.Icon.Image = E.Icon
+	_G.HIDDEN_UI.Icon.Corner.CornerRadius = E.Icon_Corners
+	_G.HIDDEN_UI.Texte.Text = E.Text
+	_G.HIDDEN_UI.Description.Text = E.Description
+
+	if BG.Visible then
+		SH.Enabled = false
+	end
+
+	for Prop, Value in SH do
+		if not Info.Loading.Enabled then
+			Window.Shadow[Prop] = Value
+		end
+		Window.Shadow:SetAttribute(Prop,Value)
+	end
+
+	if SH.Color then
+		Window.Shadow:AddTag("Custom-Color")
+	end
+
+	return self
+end
+
+function GerpUI:Theme(Name,Info)
+	if IsA(Name,"table") then
+		Name,Info = Info,Name
+	end
+
+	if not Name or not IsA(Name,"string") then
+		warn("GerpUI.Theme Requires A Theme Name")
+		return
+	end
+
+	const Theme = Rebuild(Get_Template("Theme"),Info)
+	GerpUI.Themes[Name] = Theme
+
+	return Theme
+end
+
+UserInputService.InputBegan:Connect(function(Input,GPE)
+	if GPE then return end
+
+	if Inputs[Input.KeyCode] then
+		Inputs[Input.KeyCode]()
+	end
+end)
+
+Events:Init()
+
+-- thicc mommies are why i managed to pull this off.
+
+return GerpUI
