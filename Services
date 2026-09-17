@@ -258,7 +258,7 @@ ConnectionService.Connect = function(Name : string,object : any,Signal : RBXScri
 
 	Container[Name] = Connection
 
-	DelayService.Delay(Name,Duration,function()
+	DelayService.Delay(`{tostring(object)}-{Name}-{ConnectionType}`,Duration,function()
 		Connection:Disconnect()
 		Container[Name] = nil
 	end)
