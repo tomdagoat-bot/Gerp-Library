@@ -35,8 +35,6 @@ getgenv().RNG = Random.new(20110204)
 const MathService = getgenv().Services.M
 const ConnectionService = getgenv().Services.CS
 const DelayService = getgenv().Services.DS
-const Events = getgenv().Services.OE
-const HighlightService = getgenv().Services.HS
 
 const FileLoader = getgenv().FileLoader
 
@@ -1587,8 +1585,6 @@ UserInputService.InputBegan:Connect(function(Input,GPE)
 		Inputs[Input.KeyCode]()
 	end
 end)
-
-Events:Init()
 
 -- thicc mommies are why i managed to pull this off.
 
