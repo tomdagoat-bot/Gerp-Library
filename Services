@@ -92,7 +92,7 @@ end
 
 MathService.Dot = function(Origin,Goal) : number
 	local Direction = MathService.GetDirection(Origin,Goal)
-	local Dot = CFrame.new(Origin).LookVector:Dot(Direction)
+	local Dot = MathService.GetCFrame(Origin).LookVector:Dot(Direction)
 	return Dot
 end
 
@@ -110,7 +110,7 @@ MathService.Lerp = function(Origin : BasePart,Goal,Lerp : number)
 end
 
 function MathService:Behind(Origin,Goal)
-	return MathService.Dot(Origin,Goal) >= 0
+	return MathService.Dot(Goal,Origin) >= 0
 end
 
 MathService.Nearest = function(Origin : BasePart,IgnoreDeath) : Model
