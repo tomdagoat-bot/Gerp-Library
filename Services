@@ -110,7 +110,7 @@ MathService.Lerp = function(Origin : BasePart,Goal,Lerp : number)
 end
 
 function MathService:Behind(Origin,Goal)
-	return MathService.Dot(Goal,Origin) >= 0
+	return MathService.Dot(Goal,Origin) <= 0
 end
 
 MathService.Nearest = function(Origin : BasePart,IgnoreDeath) : Model
